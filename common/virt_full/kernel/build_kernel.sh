@@ -90,6 +90,8 @@ function copy_kernel(){
     patch -d ${KERNEL_BUILD_ROOT} -p1 <${KERNEL_PATCH_PATH}/patch/power.patch
     patch -d ${KERNEL_BUILD_ROOT} -p1 <${KERNEL_PATCH_PATH}/patch/pwm_free.patch
     patch -d ${KERNEL_BUILD_ROOT} -p1 <${KERNEL_PATCH_PATH}/patch/md_stop_writes.patch
+# Fix code_sign_misc.c: add missing #include <linux/fs.h> for file_operations
+sed -i '1,/#include <linux\/miscdevice.h>/{s/#include <linux\/miscdevice.h>/#include <linux\/miscdevice.h>\n#include <linux\/fs.h>/}' ${KERNEL_BUILD_ROOT}/fs/code_sign/code_sign_misc.c
 }
 
 function stage_ko(){
