@@ -270,30 +270,6 @@ index dc6d08423..2f7b06ce8 100644
  
  endif # BLOCK
  
-@@ -129,10 +128,6 @@ config FILE_LOCKING
- 
- source "fs/crypto/Kconfig"
- 
--source "fs/code_sign/Kconfig"
--
--source "fs/dec/Kconfig"
--
- source "fs/verity/Kconfig"
- 
- source "fs/notify/Kconfig"
-diff --git a/fs/Makefile b/fs/Makefile
-index 66438333e..8b9107451 100644
---- a/fs/Makefile
-+++ b/fs/Makefile
-@@ -30,8 +30,6 @@ obj-$(CONFIG_USERFAULTFD)	+= userfaultfd.o
- obj-$(CONFIG_AIO)               += aio.o
- obj-$(CONFIG_FS_DAX)		+= dax.o
- obj-$(CONFIG_FS_ENCRYPTION)	+= crypto/
--obj-$(CONFIG_SECURITY_CODE_SIGN)	+= code_sign/
--obj-$(CONFIG_SECURITY_DEC)	+= dec/
- obj-$(CONFIG_FS_VERITY)		+= verity/
- obj-$(CONFIG_FILE_LOCKING)      += locks.o
- obj-$(CONFIG_BINFMT_MISC)	+= binfmt_misc.o
 diff --git a/fs/proc/Makefile b/fs/proc/Makefile
 index 04a0dd725..bd08616ed 100644
 --- a/fs/proc/Makefile
