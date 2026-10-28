@@ -35,7 +35,6 @@ extern "C" {
                                         System clock module configuration
 =============================================================================*/
 #define OS_SYS_CLOCK                                        10000000UL
-#define LOSCFG_BASE_CORE_TICK_PER_SECOND                    (100UL)
 #define LOSCFG_BASE_CORE_TICK_HW_TIME                       0
 #define LOSCFG_BASE_CORE_TICK_WTIMER                        1
 #define LOSCFG_BASE_CORE_TICK_RESPONSE_MAX                  ((UINT64)-1)
@@ -43,10 +42,6 @@ extern "C" {
 /*=============================================================================
                                        Task module configuration
 =============================================================================*/
-#define LOSCFG_BASE_CORE_TSK_LIMIT                          24
-#define LOSCFG_BASE_CORE_TSK_IDLE_STACK_SIZE                (0x500U)
-#define LOSCFG_BASE_CORE_TSK_DEFAULT_STACK_SIZE             (0x1000U)
-#define LOSCFG_BASE_CORE_TSK_MIN_STACK_SIZE                 (0x500U)
 #define LOSCFG_BASE_CORE_TIMESLICE                          1
 #define LOSCFG_BASE_CORE_TIMESLICE_TIMEOUT                  20000
 #define LOSCFG_BASE_CORE_TSK_MONITOR                        1
@@ -55,17 +50,14 @@ extern "C" {
                                        Semaphore module configuration
 =============================================================================*/
 #define LOSCFG_BASE_IPC_SEM                                 1
-#define LOSCFG_BASE_IPC_SEM_LIMIT                           48
 /*=============================================================================
                                        Mutex module configuration
 =============================================================================*/
 #define LOSCFG_BASE_IPC_MUX                                 1
-#define LOSCFG_BASE_IPC_MUX_LIMIT                           50
 /*=============================================================================
                                        Queue module configuration
 =============================================================================*/
 #define LOSCFG_BASE_IPC_QUEUE                               1
-#define LOSCFG_BASE_IPC_QUEUE_LIMIT                         24
 /*=============================================================================
                                        Software timer module configuration
 =============================================================================*/
@@ -79,7 +71,13 @@ extern UINTPTR __heap_start;
 extern UINTPTR __heap_size;
 #define LOSCFG_SYS_EXTERNAL_HEAP                            1
 #define LOSCFG_SYS_HEAP_ADDR                                (VOID *)&__heap_start
-#define LOSCFG_SYS_HEAP_SIZE                                (UINTPTR)&__heap_size
+/* Reserve the last 64KiB of the heap for newlib malloc (_sbrk_r in
+ * lib/libc/newlib/porting/src/hook_adapt.c). Without this, LOS_MemInit
+ * would register the whole [__heap_start, +__heap_size) as the LiteOS
+ * TLSF pool and newlib malloc would fight it for the same tail bytes
+ * (corrupting pool metadata -> OsMemPoolHeadCheck fault). */
+#define LOSCFG_NEWLIB_HEAP_SIZE                             0x10000
+#define LOSCFG_SYS_HEAP_SIZE                                ((UINTPTR)&__heap_size - LOSCFG_NEWLIB_HEAP_SIZE)
 #define LOSCFG_BASE_MEM_NODE_SIZE_CHECK                     0
 #define LOSCFG_MEM_MUL_POOL                                 1
 #define OS_SYS_MEM_NUM                                      20

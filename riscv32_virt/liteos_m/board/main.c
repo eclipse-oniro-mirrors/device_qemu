@@ -20,6 +20,10 @@
 #include "los_debug.h"
 #include "uart.h"
 
+#if (LOSCFG_DRIVERS_HDF == 1)
+#include "fb_init.h"
+#endif
+
 #ifdef LOSCFG_NET_LWIP
 
 #define IFNAMSIZ  IF_NAMESIZE
@@ -132,22 +136,32 @@ LITE_OS_SEC_TEXT_INIT INT32 main(VOID)
 #endif
 
     printf("\nFb init begin...\n");
+#if (LOSCFG_DRIVERS_HDF == 1)
     if (fb_init() != LOS_OK) {
         PRINT_ERR("Fb init failed!");
     }
     printf("Fb int end\n");
+#else
+    printf("Fb init skipped (HDF disabled)\n");
+#endif
 
     printf("\nDeviceManagerStart start ...\n");
+#if (LOSCFG_DRIVERS_HDF == 1)
     if (DeviceManagerStart()) {
         PRINT_ERR("No drivers need load by hdf manager!");
     }
     printf("DeviceManagerStart end ...\n");
+#else
+    printf("DeviceManagerStart skipped (HDF disabled) ...\n");
+#endif
 
 #ifdef LOSCFG_NET_LWIP
     net_init();
 #endif /* LOSCFG_NET_LWIP */
 
+#ifdef LOSCFG_LIB_LIBC
     SystemAdapterInit();
+#endif
     ret = LosAppInit();
     if (ret != LOS_OK) {
         PRINT_ERR("LosAppInit failed! ERROR: 0x%x\n", ret);

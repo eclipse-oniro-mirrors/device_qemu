@@ -94,12 +94,6 @@ board_asmflags += board_opt_flags
 board_cxx_flags = board_cflags
 board_ld_flags = []
 board_ld_flags += [
-  "-Wl,--wrap=_free_r",
-  "-Wl,--wrap,_malloc_usable_size_r",
-  "-Wl,--wrap,_malloc_r",
-  "-Wl,--wrap,_memalign_r",
-  "-Wl,--wrap,_realloc_r",
-  "-Wl,--wrap,_calloc_r",
   "-Wl,--wrap=printf",
 ]
 
