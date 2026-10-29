@@ -17,6 +17,8 @@
 #include "soc.h"
 #include "los_reg.h"
 #include "los_arch_interrupt.h"
+#include "los_hwi_pri.h"
+#include "los_interrupt.h"
 #include "los_debug.h"
 
 #ifdef __cplusplus
@@ -39,7 +41,7 @@ STATIC VOID OsMachineExternalInterrupt(VOID *arg)
 
     irqNum += RISCV_SYS_MAX_IRQ;
 
-    g_hwiForm[irqNum].pfnHook(g_hwiForm[irqNum].uwParam);
+    OsIntHandle(irqNum, &g_hwiHandleForm[irqNum]);
 
     WRITE_UINT32(saveIrqNum, plicReg);
 }
@@ -102,6 +104,80 @@ VOID PlicIrqDisable(UINT32 vector)
     READ_UINT32(irqValue, plicReg);
     irqValue &= ~(1 << (locIrq & 31)); /* 31: plic irq mask */
     WRITE_UINT32(irqValue, plicReg);
+}
+
+/* ---- HwiControllerOps (new riscv interrupt framework) ----
+ * The qemu virt PLIC manages external device IRQs (hwiNum > RISCV_SYS_MAX_IRQ).
+ * Local/CPU interrupts (hwiNum <= RISCV_SYS_MAX_IRQ: timer=7, ext pin=11,
+ * software=3) are enabled/disabled via the mie CSR, not the PLIC. The ops
+ * below dispatch accordingly — passing a local IRQ number to the PLIC register
+ * math would underflow and fault (vector - RISCV_SYS_MAX_IRQ goes huge). */
+
+STATIC UINT32 PlicOpsClearIrq(HWI_HANDLE_T hwiNum)
+{
+    if (hwiNum <= RISCV_SYS_MAX_IRQ) {
+        return LOS_OK; /* local interrupt, not PLIC-managed */
+    }
+    volatile UINT32 *plicReg = (volatile UINT32 *)(PLIC_REG_BASE + 0x4);
+    UINT32 irqNum = hwiNum - RISCV_SYS_MAX_IRQ;
+    WRITE_UINT32(irqNum, plicReg); /* complete the PLIC claim */
+    return LOS_OK;
+}
+
+STATIC UINT32 PlicOpsEnableIrq(HWI_HANDLE_T hwiNum)
+{
+    if (hwiNum <= RISCV_SYS_MAX_IRQ) {
+        SET_CSR(mie, 1 << hwiNum); /* local interrupt: enable via mie CSR */
+        return LOS_OK;
+    }
+    PlicIrqEnable(hwiNum);
+    return LOS_OK;
+}
+
+STATIC UINT32 PlicOpsDisableIrq(HWI_HANDLE_T hwiNum)
+{
+    if (hwiNum <= RISCV_SYS_MAX_IRQ) {
+        CLEAR_CSR(mie, 1 << hwiNum);
+        return LOS_OK;
+    }
+    PlicIrqDisable(hwiNum);
+    return LOS_OK;
+}
+
+STATIC UINT32 PlicOpsSetPrio(HWI_HANDLE_T hwiNum, HWI_PRIOR_T priority)
+{
+    if (hwiNum <= RISCV_SYS_MAX_IRQ) {
+        return LOS_OK; /* local interrupt, no PLIC priority */
+    }
+    PlicIrqSetPrio(hwiNum, (UINT32)priority);
+    return LOS_OK;
+}
+
+STATIC UINT32 PlicOpsGetCurIrq(VOID)
+{
+    volatile UINT32 *plicReg = (volatile UINT32 *)(PLIC_REG_BASE + 0x4);
+    UINT32 irqNum;
+    READ_UINT32(irqNum, plicReg);
+    return irqNum + RISCV_SYS_MAX_IRQ;
+}
+
+STATIC HwiHandleInfo *PlicOpsGetHandleForm(HWI_HANDLE_T hwiNum)
+{
+    return &g_hwiHandleForm[hwiNum];
+}
+
+STATIC HwiControllerOps g_hwiControllerOps = {
+    .clearIrq       = PlicOpsClearIrq,
+    .enableIrq      = PlicOpsEnableIrq,
+    .disableIrq     = PlicOpsDisableIrq,
+    .setIrqPriority = PlicOpsSetPrio,
+    .getCurIrqNum   = PlicOpsGetCurIrq,
+    .getHandleForm  = PlicOpsGetHandleForm,
+};
+
+HwiControllerOps *HwiControllerOpsGet(VOID)
+{
+    return &g_hwiControllerOps;
 }
 
 #ifdef __cplusplus

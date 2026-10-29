@@ -67,6 +67,25 @@ VOID HalPlicInit(VOID)
     HalIrqEnable(RISCV_MACH_EXT_IRQ);
 }
 
+/* Board-level early setup hook, called by the arch reset_vector before
+ * main(). Real-SoC boards do pin mux / clock / cache init here; this QEMU
+ * virt board first clears .bss because QEMU loads the ELF directly with no
+ * bootloader to zero-fill NOLOAD sections. Inline asm avoids the self-
+ * bootstrap paradox a C loop would create (clearing .bss from C requires
+ * the clearing code itself to have zero .bss dependency). */
+VOID BoardConfig(VOID)
+{
+    __asm__ volatile (
+        "la      t0, __bss_start\n"
+        "la      t1, __bss_end\n"
+        "1:\n"
+        "sw      zero, 0(t0)\n"
+        "addi    t0, t0, 4\n"
+        "bgtu    t1, t0, 1b\n"
+        ::: "t0", "t1", "memory"
+    );
+}
+
 #ifdef __cplusplus
 #if __cplusplus
 }

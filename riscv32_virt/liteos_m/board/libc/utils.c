@@ -88,10 +88,14 @@ void SystemAdapterInit(void)
 #endif /* LOSCFG_SUPPORT_FATFS == 1 */
 
     /* bootstrap init */
+#if defined(LOSCFG_COMPONENT_STARTUP_BOOTSTRAP)
     OHOS_SystemInit();
+#endif
 
     /* register hilog output func for mini */
+#if defined(LOSCFG_COMPONENT_HIVIEWDFX_HILOG)
     HiviewRegisterHilogProc(HilogProc_Impl);
+#endif
 }
 
 /**

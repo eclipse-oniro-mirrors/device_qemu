@@ -30,13 +30,11 @@
  */
 
 #include <stdarg.h>
-#include <stdio.h>
 #include "securec.h"
 #include "uart.h"
-#include "los_debug.h"
 #include "los_interrupt.h"
 
-static void dputs(char const *s, int (*pFputc)(int n, FILE *cookie), void *cookie)
+static void dputs(char const *s, int (*pFputc)(int n, VOID *cookie), VOID *cookie)
 {
     unsigned int intSave;
 
