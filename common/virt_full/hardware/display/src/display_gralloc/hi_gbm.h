@@ -86,8 +86,22 @@ enum gbm_bo_flags {
 
 struct gbm_device *hdi_gbm_create_device(int fd);
 void hdi_gbm_device_destroy(struct gbm_device *gbm);
+/*
+ * Create a buffer object through the DRM dumb-buffer path.
+ * On failure nullptr is returned and, when errNo is not nullptr, it receives the cause:
+ * EINVAL/ENOSYS/EOPNOTSUPP mean the driver rejected the format/geometry (unsupported),
+ * ENOMEM means out of memory. errNo may be nullptr for callers that do not care.
+ */
 struct gbm_bo *hdi_gbm_bo_create(struct gbm_device *gbm, uint32_t width, uint32_t height,
-    uint32_t format, uint32_t usage);
+    uint32_t format, uint32_t usage, int32_t *errNo);
+/*
+ * Create a buffer object whose stride/size follow the software layout of 'format',
+ * backed by a plain 32bpp dumb buffer of the exact byte size. Used as fallback for
+ * formats whose native dumb-buffer creation is rejected by the DRM driver (for example
+ * YUV/16bpp/24bpp formats on virtio-gpu, which only supports 32bpp dumb buffers).
+ */
+struct gbm_bo *HdiGbmBoCreateLinear(struct gbm_device *gbm, uint32_t width, uint32_t height,
+    uint32_t format);
 uint32_t hdi_gbm_bo_get_stride(struct gbm_bo *bo);
 uint32_t hdi_gbm_bo_get_width(struct gbm_bo *bo);
 uint32_t hdi_gbm_bo_get_height(struct gbm_bo *bo);

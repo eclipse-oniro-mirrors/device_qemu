@@ -16,6 +16,9 @@ import("//build/ohos.gni")
 group("hardware_group") {
   deps = [
     "//device/qemu/common/virt_full/hardware/gpu:virtio",
+    "//device/qemu/common/virt_full/hardware/sensor:sensor_sim_model",
+    "//device/qemu/common/virt_full/hardware/codec/jpeg:virt_jpeg_codec_model",
+    "//device/qemu/common/virt_full/hardware/codec/omx:virt_omx_core_model",
     "//third_party/alsa-utils:entry",
     #"//third_party/mesa3d:zink_opengl",
     #"//third_party/expat:expat",

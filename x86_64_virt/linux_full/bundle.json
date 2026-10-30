@@ -20,6 +20,7 @@
     "ram": "",
     "deps": {
       "components": [
+        "bounds_checking_function",
         "c_utils",
         "drivers_interface_camera",
         "drivers_interface_display",
@@ -30,10 +31,12 @@
         "hilog",
         "hitrace",
         "ipc",
+        "openmax",
         "samgr"
       ],
       "third_party": [
-        "libdrm"
+        "libdrm",
+        "libjpeg-turbo"
       ]
     },
     "build": {

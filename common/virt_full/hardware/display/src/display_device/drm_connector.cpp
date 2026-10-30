@@ -119,8 +119,12 @@ int32_t DrmConnector::SetBrightness(uint32_t level)
     if (blFd <= 0) {
         blFd = open("/sys/class/backlight/backlight/brightness", O_RDWR);
         if (blFd < 0) {
-            DISPLAY_LOGE("DrmConnector::SetBrightness open file error %{public}s", strerror(errno));
-            return DISPLAY_FAILURE;
+            /* A virtual display has no physical backlight device. Keep the
+             * software level so that GetBrightness reports a consistent value,
+             * mirroring the soft behaviour already used by GetBrightness. */
+            DISPLAY_LOGI("no backlight sysfs node, keep software brightness %{public}u", level);
+            mBrightnessLevel = level;
+            return DISPLAY_SUCCESS;
         }
     }
     if (level < 0) {

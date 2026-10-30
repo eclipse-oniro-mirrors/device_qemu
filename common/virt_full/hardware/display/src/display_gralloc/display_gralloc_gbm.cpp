@@ -161,6 +161,7 @@ static uint32_t ConvertFormatToDrm(PixelFormat fmtIn)
         {DRM_FORMAT_YUV420, PIXEL_FMT_YCBCR_420_P}, {DRM_FORMAT_YVU420, PIXEL_FMT_YCRCB_420_P},
         {DRM_FORMAT_NV16, PIXEL_FMT_YCBCR_422_SP}, {DRM_FORMAT_NV61, PIXEL_FMT_YCRCB_422_SP},
         {DRM_FORMAT_YUV422, PIXEL_FMT_YCBCR_422_P}, {DRM_FORMAT_YVU422, PIXEL_FMT_YCRCB_422_P},
+        {DRM_FORMAT_RGBA1010102, PIXEL_FMT_RGBA_1010102},
     };
     uint32_t fmtOut = 0;
     for (uint32_t i = 0; i < sizeof(convertTable) / sizeof(convertTable[0]); i++) {
@@ -275,12 +276,35 @@ static void InitBufferHandle(struct gbm_bo *bo, int fd, const AllocInfo *info, P
     bufferHandle->size = hdi_gbm_bo_get_size(bo);
 }
 
+static struct gbm_bo *CreateGbmBoWithFallback(struct gbm_device *dev, const AllocInfo *info,
+    uint32_t drmFmt, int32_t *errNo)
+{
+    struct gbm_bo *bo = hdi_gbm_bo_create(dev, info->width, info->height, drmFmt,
+        ConvertUsageToGbm(info->usage), errNo);
+    if (bo != nullptr) {
+        return bo;
+    }
+    /* The DRM driver rejected this format/geometry for dumb buffers (for example
+     * virtio-gpu only supports 32bpp). Fall back to a linear buffer backed by the
+     * same DRM memory, so formats needed for CPU access still allocate successfully. */
+    if (*errNo == EINVAL || *errNo == ENOSYS || *errNo == EOPNOTSUPP) {
+        DISPLAY_LOGI("fallback to linear alloc for fmt %{public}s(%{public}d), size %{public}u x %{public}u",
+            GetDrmFmtStr(drmFmt), info->format, info->width, info->height);
+        return HdiGbmBoCreateLinear(dev, info->width, info->height, drmFmt);
+    }
+    return nullptr;
+}
+
 int32_t GbmAllocMem(const AllocInfo *info, BufferHandle **buffer)
 {
     DISPLAY_CHK_RETURN((info == nullptr), HDF_FAILURE, DISPLAY_LOGE("info is null"));
     DISPLAY_CHK_RETURN((buffer == nullptr), HDF_FAILURE, DISPLAY_LOGE("buffer is null"));
+    DISPLAY_CHK_RETURN((info->width == 0 || info->height == 0), HDF_ERR_INVALID_PARAM,
+        DISPLAY_LOGE("invalid geometry %{public}u x %{public}u", info->width, info->height));
     PriBufferHandle *priBuffer = nullptr;
     uint32_t drmFmt = ConvertFormatToDrm(static_cast<PixelFormat>(info->format));
+    /* Report unsupported formats with the HDI error code so that callers can
+     * distinguish "not supported" from hard failures. */
     DISPLAY_CHK_RETURN((drmFmt == INVALID_PIXEL_FMT), HDF_ERR_NOT_SUPPORT,
         DISPLAY_LOGE("format %{public}d can not support", info->format));
     DISPLAY_LOGD("requeset width %{public}d, heigt %{public}d, format %{public}d",
@@ -290,9 +314,11 @@ int32_t GbmAllocMem(const AllocInfo *info, BufferHandle **buffer)
     GrallocManager *grallocManager = GetGrallocManager();
     DISPLAY_CHK_RETURN((grallocManager == nullptr), HDF_ERR_INVALID_PARAM, DISPLAY_LOGE("gralloc manager failed");
         GRALLOC_UNLOCK());
-    struct gbm_bo *bo =
-        hdi_gbm_bo_create(grallocManager->gbmDevice, info->width, info->height, drmFmt, ConvertUsageToGbm(info->usage));
-    DISPLAY_CHK_RETURN((bo == nullptr), HDF_DEV_ERR_NO_MEMORY, DISPLAY_LOGE("gbm create bo failed"); \
+    int32_t errNo = 0;
+    struct gbm_bo *bo = CreateGbmBoWithFallback(grallocManager->gbmDevice, info, drmFmt, &errNo);
+    DISPLAY_CHK_RETURN((bo == nullptr),
+        ((errNo == ENOMEM) ? HDF_DEV_ERR_NO_MEMORY : HDF_ERR_NOT_SUPPORT),
+        DISPLAY_LOGE("gbm create bo failed, errNo %{public}d", errNo); \
         GRALLOC_UNLOCK());
 
     int fd = hdi_gbm_bo_get_fd(bo);
@@ -300,20 +326,15 @@ int32_t GbmAllocMem(const AllocInfo *info, BufferHandle **buffer)
         hdi_gbm_bo_destroy(bo); \
         GRALLOC_UNLOCK());
 
-    errno_t eok = EOK;
     priBuffer = (PriBufferHandle *)malloc(sizeof(PriBufferHandle));
     if (priBuffer == nullptr) {
         DISPLAY_LOGE("bufferhandle malloc failed");
         goto error;
     }
-
-    eok = memset_s(priBuffer, sizeof(PriBufferHandle), 0, sizeof(PriBufferHandle));
-    if (eok != EOK) {
+    if (memset_s(priBuffer, sizeof(PriBufferHandle), 0, sizeof(PriBufferHandle)) != EOK) {
         DISPLAY_LOGE("memset_s failed");
         goto error;
     }
-    DISPLAY_CHK_RETURN((eok != EOK), DISPLAY_PARAM_ERR, DISPLAY_LOGE("memset_s failed"); \
-        goto error);
 
     InitBufferHandle(bo, fd, info, priBuffer);
     *buffer = &priBuffer->hdl;

@@ -89,18 +89,12 @@ bool HdiGfxComposition::CanHandle(HdiLayer &hdiLayer)
 
 bool HdiGfxComposition::UseCompositionClient(std::vector<HdiLayer *> &layers)
 {
-    int32_t layerCount = 0;
-    bool hasCompositionClient = true;
-
-    for (auto &layer : layers) {
-        if (!CanHandle(*layer)) {
-            continue;
-        }
-        CompositionType type = layer->GetCompositionType();
-        layerCount += (type != COMPOSITION_VIDEO) && (type != COMPOSITION_CURSOR);
-        hasCompositionClient = hasCompositionClient || (type == COMPOSITION_CLIENT);
-    }
-    return hasCompositionClient || (layerCount > 4);
+    // The virtual display composes on the CPU: the pre-composition (this class)
+    // blits every layer into the client buffer and the post-composition (DRM)
+    // only scans out the client buffer. Therefore the device can handle all
+    // layers and none of them needs to be left for client-side composition.
+    (void)layers;
+    return false;
 }
 
 int32_t HdiGfxComposition::SetLayers(std::vector<HdiLayer *> &layers, HdiLayer &clientLayer)
@@ -120,7 +114,6 @@ int32_t HdiGfxComposition::SetLayers(std::vector<HdiLayer *> &layers, HdiLayer &
         } else {
             layer->SetDeviceSelect(defaultCompType);
         }
-	layer->SetDeviceSelect(defaultCompType);
         mCompLayers.push_back(layer);
     }
     DISPLAY_LOGD("composer layers size %{public}zd", mCompLayers.size());
