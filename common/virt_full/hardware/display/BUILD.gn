@@ -34,6 +34,7 @@ ohos_shared_library("libdisplay_buffer_vdi_impl") {
   public_configs = [ ":libdisplay_buffer_vdi_impl_config" ]
 
   include_dirs = [
+    "./include",
     "./src/display_gralloc",
     "${root_path}/drivers/peripheral/base",
     "${root_path}/drivers/interface/display/composer/hdifd_parcelable",

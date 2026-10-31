@@ -37,6 +37,9 @@ public:
     virtual int32_t Unmap(const BufferHandle& handle) const override;
     virtual int32_t FlushCache(const BufferHandle& handle) const override;
     virtual int32_t InvalidateCache(const BufferHandle& handle) const override;
+    virtual int32_t ReAllocMem(const OHOS::HDI::Display::Buffer::V1_0::AllocInfo& info,
+        const BufferHandle& inHandle, BufferHandle*& outHandle) const override;
+    virtual int32_t CloneDmaBufferHandle(const BufferHandle& inHandle, BufferHandle*& outHandle) const override;
     virtual int32_t IsSupportedAlloc(const std::vector<VerifyAllocInfo>& infos,
         std::vector<bool>& supporteds) const override;
     virtual int32_t RegisterBuffer(const BufferHandle& handle) override;
