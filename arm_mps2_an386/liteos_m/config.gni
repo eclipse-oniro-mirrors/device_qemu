@@ -31,7 +31,21 @@ board_toolchain = "arm-none-eabi-gcc"
 use_board_toolchain = true
 
 # The toolchain path installed, it's not mandatory if you have added toolchain path to your ~/.bashrc.
-board_toolchain_path = ""
+_hpl_script_on = false
+if (product_path != "" && ohos_build_type != "") {
+  _hpl_kernel_config = "$product_path/kernel_configs/${ohos_build_type}.config"
+  foreach(_line, read_file(_hpl_kernel_config, "list lines")) {
+    if (string_replace(_line, " ", "") ==
+        "LOSCFG_KERNEL_HPL_SCRIPT_PREPROCESSOR=y") {
+      _hpl_script_on = true
+    }
+  }
+}
+if (_hpl_script_on) {
+  board_toolchain_path = rebase_path("$root_out_dir/hpl/toolchain")
+} else {
+  board_toolchain_path = ""
+}
 
 # Compiler prefix.
 board_toolchain_prefix = "arm-none-eabi-"

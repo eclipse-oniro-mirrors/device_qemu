@@ -31,15 +31,16 @@
 
 OUTPUT_FORMAT("elf32-littleriscv", "elf32-littleriscv", "elf32-littleriscv")
 OUTPUT_ARCH("riscv")
-ENTRY(_start)
+ENTRY(reset_vector)
 
 RAM_ADDR_START            = 0x80000000;
 RAM_ADDR_SIZE             = 128M;
 FLASH_LOAD_START          = RAM_ADDR_START;
 FLASH_LOAD_SIZE           = RAM_ADDR_SIZE;
-EXCEPT_STACK_SIZE         = 2K;
+IRQ_STACK_SIZE            = 2K;
+STARTUP_STACK_SIZE        = 2K;
+EXC_STACK_SIZE            = 1K;
 NMI_STACK_SIZE            = 1K;
-START_AND_IRQ_STACK_SIZE  = 8K;
 
 MEMORY
 {
@@ -68,6 +69,7 @@ SECTIONS
   .data : ALIGN(0x20)
   {
     __global_pointer$ = . + 0x800;
+    _gp_ = __global_pointer$;
     __data_load_start = LOADADDR(.data);
     __data_start = .;
     /* preinit_array */
@@ -189,11 +191,13 @@ SECTIONS
   } > ram
   .stack (NOLOAD): ALIGN(0x40)
   {
-    __stack_bootom = .;
-    . += EXCEPT_STACK_SIZE;
-    __except_stack_top = .;
-    . += START_AND_IRQ_STACK_SIZE;
-    __start_and_irq_stack_top = .;
+    /* Generic los_stack.S allocates the four stacks (irq/startup/exc/nmi)
+     * in .int_stack and defines their *_top symbols plus the back-compat
+     * __except_stack_top / __start_and_irq_stack_top aliases; place that
+     * section here. */
+    __stack_bottom = .;
+    *(.int_stack)
+    . = ALIGN(0x20);
   } > ram
 
   .heap (NOLOAD): ALIGN(0x40)

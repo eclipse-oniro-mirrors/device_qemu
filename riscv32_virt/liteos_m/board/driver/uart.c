@@ -17,6 +17,7 @@
 
 #include "los_arch_interrupt.h"
 #include "los_interrupt.h"
+#include "los_printf.h"
 #include "riscv_hal.h"
 
 #ifdef __cplusplus
@@ -34,6 +35,24 @@ INT32 UartPutc(INT32 c, VOID *file)
     }
     WriteUartReg(UART_THR_OFFSET, (UINT8)c);
     return c;
+}
+
+/* Strong UartPuts for kernel PRINTK/exception output (overrides the
+ * WEAK no-op in los_printf.c). Without this, kernel error messages
+ * and exception traces are silently lost. */
+VOID UartPuts(const CHAR *s, UINT32 len, BOOL isLock)
+{
+    UINT32 intSave = 0;
+
+    if (isLock != UART_WITHOUT_LOCK) {
+        intSave = LOS_IntLock();
+    }
+    for (UINT32 i = 0; i < len; i++) {
+        UartPutc((INT32)s[i], NULL);
+    }
+    if (isLock != UART_WITHOUT_LOCK) {
+        LOS_IntRestore(intSave);
+    }
 }
 
 INT32 UartGetc(VOID)

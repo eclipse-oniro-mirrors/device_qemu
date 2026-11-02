@@ -27,27 +27,13 @@
 # OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
 # ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-import("//drivers/hdf_core/adapter/khdf/liteos_m/hdf.gni")
 import("//kernel/liteos_m/liteos.gni")
 
-hdf_driver("bsp_config") {
+kernel_module("bsp_config") {
   asmflags = board_asmflags
   sources = [
-    "driver/cfiflash/cfiflash.c",
-    "driver/cfiflash/cfiflash_fs_hal.c",
-    "driver/cfiflash/hdf_cfi.c",
     "driver/plic.c",
     "driver/uart.c",
-    "driver/video/fb.c",
-    "driver/video/fb_init.c",
-    "driver/video/fb_mem.c",
-    "driver/video/key_cache.c",
-    "driver/virtgpu.c",
-    "driver/virtinput.c",
-    "driver/virtmmio.c",
-    "driver/virtnet.c",
-    "fs/ff_gen_drv.c",
-    "los_start.S",
     "main.c",
     "riscv_hal.c",
   ]
@@ -56,25 +42,14 @@ hdf_driver("bsp_config") {
     sources += [ "test/test_demo.c" ]
   }
   include_dirs = [
-    "driver/cfiflash",
-    "driver/video",
+    "driver",
     "hardware",
     "hardware/adapter",
-    "$LITEOSTHIRDPARTY/FreeBSD/sys/dev/evdev",
-    "$HDF_FRAMEWORKS_PATH/include/utils",
-    "$HDF_FRAMEWORKS_PATH/model/input/driver",
-    "$HDF_PERIPHERAL_PATH/base",
-    "$HDF_PERIPHERAL_PATH/display/interfaces/include",
-    "$HDF_PERIPHERAL_PATH/input/interfaces/include",
-    "//drivers/hdf_core/adapter/khdf/liteos_m/osal/include",
-    "//drivers/hdf_core/interfaces/inner_api/osal/shared",
     "//third_party/bounds_checking_function/include",
   ]
 
   deps = [
-    "hardware",
     "libc",
-    "ui",
   ]
 }
 
@@ -84,8 +59,6 @@ config("public") {
     "include",
     "include/asm",
     "driver",
-    "fs",
-    "ui",
   ]
 
   ldflags = [
@@ -97,18 +70,19 @@ config("public") {
   ]
 
   # config force_link_libs from vendor/ohemu/qemu_riscv32_mini_system_demo/config.json
-  ldflags += [ "-L./libs" ]
-  ldflags += [ "-Wl,--whole-archive" ]
-  foreach(force_link_lib, force_link_libs) {
-    ldflags += [ "-l${force_link_lib}" ]
+  if (defined(force_link_libs) && force_link_libs != []) {
+    ldflags += [ "-L./libs" ]
+    ldflags += [ "-Wl,--whole-archive" ]
+    foreach(force_link_lib, force_link_libs) {
+      ldflags += [ "-l${force_link_lib}" ]
+    }
+    ldflags += [ "-Wl,--no-whole-archive" ]
   }
-  ldflags += [ "-Wl,--no-whole-archive" ]
 
   libs = [
     "nosys",
     "gcc",
     "stdc++",
-    "ui",
   ]
 
   if (defined(LOSCFG_LIBC_NEWLIB)) {
