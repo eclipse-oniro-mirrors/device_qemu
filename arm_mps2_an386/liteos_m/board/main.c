@@ -33,6 +33,7 @@
 #include "uart.h"
 #include "los_debug.h"
 #include "lan9118_eth_drv.h"
+#include "los_task_pri.h"
 
 
 unsigned int LosAppInit(VOID);
@@ -47,6 +48,11 @@ extern unsigned int LosShellInit(void);
 LITE_OS_SEC_TEXT_INIT int main(void)
 {
     unsigned int ret;
+
+#ifdef LOSCFG_KERNEL_HPL_TASK_LOCK_FREE
+    OsSetMainTask();
+    OsCurrTaskSet(OsGetMainTask());
+#endif
 
     UartInit();
 

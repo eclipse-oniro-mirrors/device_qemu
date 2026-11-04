@@ -65,7 +65,6 @@
 =============================================================================*/
 #define LOSCFG_BASE_CORE_SWTMR                              1
 #define LOSCFG_BASE_CORE_SWTMR_ALIGN                        1
-#define LOSCFG_BASE_CORE_SWTMR_LIMIT                        48
 #define LOSCFG_BASE_CORE_SWTMR_IN_ISR                       1
 /*=============================================================================
                                        Memory module configuration
