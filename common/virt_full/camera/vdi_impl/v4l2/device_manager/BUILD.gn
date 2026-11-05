@@ -13,7 +13,6 @@
 import("//build/ohos.gni")
 import("//device/qemu/common/virt_full/device.gni")
 import("//drivers/peripheral/camera/camera.gni")
-virt_subsystem_name = "device_arm64_virt"
 
 config("device_manager_config") {
   visibility = [ ":*" ]
@@ -77,5 +76,5 @@ ohos_shared_library("camera_device_manager") {
   public_configs = [ ":device_manager_config" ]
   install_images = [ chipset_base_dir ]
   subsystem_name = virt_subsystem_name
-  part_name = "qemu_virt_full"
+  part_name = virt_part_name
 }

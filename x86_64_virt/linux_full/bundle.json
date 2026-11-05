@@ -29,8 +29,10 @@
         "graphic_surface",
         "hdf_core",
         "hilog",
+        "hisysevent",
         "hitrace",
         "ipc",
+        "libexif",
         "openmax",
         "samgr"
       ],
