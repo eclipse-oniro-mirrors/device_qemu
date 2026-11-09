@@ -34,4 +34,7 @@ group("virt_group") {
   if (is_support_codec) {
     deps += []
   }
+  if (is_support_camera) {
+    deps += [ "//device/qemu/common/virt_full/camera/vdi_impl/v4l2:camera_board_vdi_impl" ]
+  }
 }

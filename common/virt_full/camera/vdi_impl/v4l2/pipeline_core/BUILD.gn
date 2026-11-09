@@ -16,7 +16,6 @@ import("//drivers/hdf_core/adapter/uhdf2/uhdf.gni")
 import("//drivers/peripheral/camera/camera.gni")
 
 import("//drivers/peripheral/camera/vdi_base/usb_camera/camera_usb.gni")
-virt_subsystem_name = "device_arm64_virt"
 
 config("pipe_config") {
   visibility = [ ":*" ]
@@ -54,8 +53,9 @@ ohos_shared_library("camera_pipeline_core") {
   sources = [
     "$camera_path/adapter/platform/v4l2/src/pipeline_core/nodes/v4l2_source_node/v4l2_source_node.cpp",
     "//drivers/peripheral/camera/vdi_base/usb_camera/adapter/platform/v4l2/src/pipeline_core/nodes/uvc_node/uvc_node.cpp",
-    "$camera_path_usb/pipeline_core/pipeline_impl/src/strategy/config/config.c",
-    "$camera_path_usb/pipeline_core/pipeline_impl/src/strategy/config/params.c",
+    "//drivers/peripheral/camera/vdi_base/usb_camera/pipeline_core/src/mjpeg_decoder/mjpeg_decoder.cpp",
+    "$camera_path/pipeline_core/pipeline_impl/src/strategy/config/config.c",
+    "$camera_path/pipeline_core/pipeline_impl/src/strategy/config/params.c",
     "$camera_path_usb/pipeline_core/src/node/codec_node.cpp",
     "$camera_path_usb/pipeline_core/src/node/exif_node.cpp",
     "$camera_path_usb/pipeline_core/src/node/face_node.cpp",
@@ -99,6 +99,7 @@ ohos_shared_library("camera_pipeline_core") {
     "../device_manager/include",
     "//commonlibrary/c_utils/base/include",
     "//drivers/peripheral/camera/vdi_base/usb_camera/pipeline_core/src/node",
+    "//drivers/peripheral/camera/vdi_base/usb_camera/pipeline_core/src/mjpeg_decoder",
     "//third_party/libexif",
     "$camera_path/device_manager/include",
     "$camera_path/metadata_manager/include",
@@ -134,7 +135,7 @@ ohos_shared_library("camera_pipeline_core") {
     "$board_camera_path:config.c",
     "$board_camera_path:params.c",
     "$board_camera_path/device_manager:camera_device_manager",
-    "//third_party/libjpeg-turbo:turbojpeg_static",
+    "//third_party/libjpeg-turbo:turbojpeg",
   ]
 
   if (is_standard_system) {
@@ -153,19 +154,25 @@ ohos_shared_library("camera_pipeline_core") {
     external_deps = [ "hilog:libhilog" ]
   }
   external_deps += [
+    "bounds_checking_function:libsec_shared",
     "c_utils:utils",
+    "drivers_interface_camera:libbuffer_handle_sequenceable_1.0",
     "drivers_interface_camera:libbuffer_producer_sequenceable_1.0",
     "drivers_interface_camera:metadata",
+    "graphic_surface:buffer_handle",
     "graphic_surface:surface",
     "hdf_core:libhdf_host",
+    "hilog:libhilog",
+    "hisysevent:libhisysevent",
     "ipc:ipc_single",
+    "libexif:libexif",
     "ffmpeg:libohosffmpeg",
   ]
 
   public_configs = [ ":pipe_config" ]
   install_images = [ chipset_base_dir ]
   subsystem_name = virt_subsystem_name
-  part_name = "qemu_virt_full"
+  part_name = virt_part_name
 }
 
 #rk test
@@ -204,7 +211,7 @@ ohos_shared_library("rk_camera_pipeline_core") {
     "$board_camera_path:config.c",
     "$board_camera_path:params.c",
     "$board_camera_path/device_manager:camera_device_manager",
-    "//third_party/libjpeg-turbo:turbojpeg_static",
+    "//third_party/libjpeg-turbo:turbojpeg",
   ]
 
   if (is_standard_system) {
@@ -222,19 +229,25 @@ ohos_shared_library("rk_camera_pipeline_core") {
     external_deps = [ "hilog:libhilog" ]
   }
   external_deps += [
+    "bounds_checking_function:libsec_shared",
     "c_utils:utils",
+    "drivers_interface_camera:libbuffer_handle_sequenceable_1.0",
     "drivers_interface_camera:libbuffer_producer_sequenceable_1.0",
     "drivers_interface_camera:metadata",
+    "graphic_surface:buffer_handle",
     "graphic_surface:surface",
     "hdf_core:libhdf_host",
+    "hilog:libhilog",
+    "hisysevent:libhisysevent",
     "ipc:ipc_single",
+    "libexif:libexif",
     "ffmpeg:libohosffmpeg",
   ]
 
   public_configs = [ ":pipe_config" ]
   install_images = [ chipset_base_dir ]
   subsystem_name = virt_subsystem_name
-  part_name = "qemu_virt_full"
+  part_name = virt_part_name
 }
 
 config("example_config") {
@@ -259,5 +272,5 @@ ohos_shared_library("camera_ipp_algo_example") {
   public_configs = [ ":example_config" ]
   install_images = [ chipset_base_dir ]
   subsystem_name = virt_subsystem_name
-  part_name = "qemu_virt_full"
+  part_name = virt_part_name
 }

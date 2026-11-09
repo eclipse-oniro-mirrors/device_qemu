@@ -23,6 +23,7 @@ if (!defined(defines)) {
 
 declare_args() {
   is_support_boot_animation = false
+  is_support_camera = true
   is_support_graphic = true
   is_support_codec = false
 }
@@ -42,12 +43,16 @@ if (!defined(global_parts_info.hdf_drivers_peripheral_codec)) {
   is_support_codec = false
 }
 
+if (!defined(global_parts_info.hdf_drivers_peripheral_camera)) {
+  is_support_camera = false
+}
+
 product_config_path = "//vendor/${product_company}/${product_name}"
 if (target_cpu == "x86_64") {
   product_config_path = "//vendor/ohemu/virt"
 }
 
-board_camera_path = "//device/qemu/common/virt_full/camera"
+board_camera_path = "//device/qemu/common/virt_full/camera/vdi_impl/v4l2"
 
 is_support_v4l2 = true
 if (is_support_v4l2) {

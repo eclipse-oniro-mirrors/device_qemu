@@ -28,8 +28,10 @@
         "graphic_surface",
         "hdf_core",
         "hilog",
+        "hisysevent",
         "hitrace",
         "ipc",
+        "libexif",
         "samgr"
       ],
       "third_party": [

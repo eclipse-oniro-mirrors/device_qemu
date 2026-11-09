@@ -21,7 +21,6 @@ if (product_name == "virt_mini_system") {
   import("//drivers/hdf_core/adapter/uhdf2/uhdf.gni")
   import("//drivers/peripheral/camera/camera.gni")
   import("$hdf_framework_path/tools/hc-gen/hc_gen.gni")
-  virt_subsystem_name = "device_arm64_virt"
 
   hc_gen("build_camera_host_config") {
     sources = [ rebase_path(
@@ -35,7 +34,7 @@ if (product_name == "virt_mini_system") {
     relative_install_dir = "hdfconfig"
     install_images = [ chipset_base_dir, chip_prod_base_dir ]
     subsystem_name = virt_subsystem_name
-    part_name = "qemu_virt_full"
+    part_name = virt_part_name
   }
 
   hc_gen_c("generate_source") {
@@ -96,7 +95,7 @@ if (product_name == "virt_mini_system") {
     relative_install_dir = "hdfconfig"
     install_images = [ chipset_base_dir ]
     subsystem_name = virt_subsystem_name
-    part_name = "qemu_virt_full"
+    part_name = virt_part_name
   }
 
   config("example_config") {
@@ -235,16 +234,21 @@ if (product_name == "virt_mini_system") {
       external_deps = [ "hilog:libhilog" ]
     }
     external_deps += [
+      "bounds_checking_function:libsec_shared",
+      "drivers_interface_camera:libbuffer_handle_sequenceable_1.0",
       "drivers_interface_camera:libbuffer_producer_sequenceable_1.0",
       "drivers_interface_camera:metadata",
       "drivers_interface_display:libdisplay_composer_proxy_1.0",
+      "graphic_surface:buffer_handle",
       "hitrace:hitrace_meter",
+      "hisysevent:libhisysevent",
       "ipc:ipc_single",
+      "libexif:libexif",
     ]
     public_configs = [ ":camhdi_impl_config" ]
     install_images = [ chipset_base_dir ]
     subsystem_name = virt_subsystem_name
-    part_name = "qemu_virt_full"
+    part_name = virt_part_name
   }
 
   ohos_static_library("camera_host_vdi_impl_1.0_static") {
@@ -291,16 +295,21 @@ if (product_name == "virt_mini_system") {
       external_deps = [ "hilog:libhilog" ]
     }
     external_deps += [
+      "bounds_checking_function:libsec_shared",
+      "drivers_interface_camera:libbuffer_handle_sequenceable_1.0",
       "drivers_interface_camera:libbuffer_producer_sequenceable_1.0",
       "drivers_interface_camera:metadata",
       "drivers_interface_display:libdisplay_composer_proxy_1.0",
+      "graphic_surface:buffer_handle",
       "hitrace:hitrace_meter",
+      "hisysevent:libhisysevent",
       "ipc:ipc_single",
+      "libexif:libexif",
     ]
 
     public_configs = [ ":camhdi_impl_config" ]
     subsystem_name = virt_subsystem_name
-    part_name = "qemu_virt_full"
+    part_name = virt_part_name
   }
 
   ohos_shared_library("camera_pipeline_config") {
@@ -312,7 +321,7 @@ if (product_name == "virt_mini_system") {
         [ "$camera_path/pipeline_core/pipeline_impl/src/strategy/config" ]
     install_images = [ chipset_base_dir ]
     subsystem_name = virt_subsystem_name
-    part_name = "qemu_virt_full"
+    part_name = virt_part_name
   }
 
   ohos_shared_library("camera_vendor_tag_impl") {
