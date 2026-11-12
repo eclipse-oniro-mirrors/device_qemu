@@ -16,6 +16,7 @@ import("//drivers/hdf_core/adapter/uhdf2/uhdf.gni")
 import("//drivers/peripheral/camera/camera.gni")
 
 import("//drivers/peripheral/camera/vdi_base/usb_camera/camera_usb.gni")
+import("../camera_config.gni")
 
 config("pipe_config") {
   visibility = [ ":*" ]
@@ -52,10 +53,6 @@ ohos_shared_library("camera_pipeline_core") {
   defines += [ "DEVICE_USAGE_FFMPEG_ENABLE" ]
   sources = [
     "$camera_path/adapter/platform/v4l2/src/pipeline_core/nodes/v4l2_source_node/v4l2_source_node.cpp",
-    "//drivers/peripheral/camera/vdi_base/usb_camera/adapter/platform/v4l2/src/pipeline_core/nodes/uvc_node/uvc_node.cpp",
-    "//drivers/peripheral/camera/vdi_base/usb_camera/pipeline_core/src/mjpeg_decoder/mjpeg_decoder.cpp",
-    "$camera_path/pipeline_core/pipeline_impl/src/strategy/config/config.c",
-    "$camera_path/pipeline_core/pipeline_impl/src/strategy/config/params.c",
     "$camera_path_usb/pipeline_core/src/node/codec_node.cpp",
     "$camera_path_usb/pipeline_core/src/node/exif_node.cpp",
     "$camera_path_usb/pipeline_core/src/node/face_node.cpp",
@@ -84,7 +81,10 @@ ohos_shared_library("camera_pipeline_core") {
     "$camera_path_vdi/pipeline_core/pipeline_impl/src/strategy/stream_pipeline_strategy.cpp",
     "$camera_path_vdi/pipeline_core/pipeline_impl/src/stream_pipeline_core.cpp",
     "$camera_path_vdi/pipeline_core/src/pipeline_core.cpp",
+    "//drivers/peripheral/camera/vdi_base/usb_camera/adapter/platform/v4l2/src/pipeline_core/nodes/uvc_node/uvc_node.cpp",
+    "//drivers/peripheral/camera/vdi_base/usb_camera/pipeline_core/src/mjpeg_decoder/mjpeg_decoder.cpp",
   ]
+  sources += camera_config_sources
   include_dirs = [
     "$camera_path/utils/exif",
     "$camera_path/../../interfaces/include",
@@ -131,8 +131,11 @@ ohos_shared_library("camera_pipeline_core") {
     "$camera_path/../interfaces",
   ]
 
+  include_dirs += [ camera_config_gen_dir ]
+
   deps = [
     "$board_camera_path:config.c",
+    "$board_camera_path:generate_source",
     "$board_camera_path:params.c",
     "$board_camera_path/device_manager:camera_device_manager",
     "//third_party/libjpeg-turbo:turbojpeg",
@@ -146,9 +149,9 @@ ohos_shared_library("camera_pipeline_core") {
       "drivers_peripheral_camera:peripheral_camera_pipeline_core",
       "drivers_peripheral_camera:peripheral_camera_utils",
       "drivers_peripheral_camera:peripheral_camera_v4l2_adapter",
+      "ffmpeg:libohosffmpeg",
       "hdf_core:libhdf_utils",
       "hilog:libhilog",
-      "ffmpeg:libohosffmpeg",
     ]
   } else {
     external_deps = [ "hilog:libhilog" ]
@@ -159,6 +162,7 @@ ohos_shared_library("camera_pipeline_core") {
     "drivers_interface_camera:libbuffer_handle_sequenceable_1.0",
     "drivers_interface_camera:libbuffer_producer_sequenceable_1.0",
     "drivers_interface_camera:metadata",
+    "ffmpeg:libohosffmpeg",
     "graphic_surface:buffer_handle",
     "graphic_surface:surface",
     "hdf_core:libhdf_host",
@@ -166,7 +170,6 @@ ohos_shared_library("camera_pipeline_core") {
     "hisysevent:libhisysevent",
     "ipc:ipc_single",
     "libexif:libexif",
-    "ffmpeg:libohosffmpeg",
   ]
 
   public_configs = [ ":pipe_config" ]
@@ -182,15 +185,17 @@ ohos_shared_library("rk_camera_pipeline_core") {
     defines += [ "CAMERA_BUILT_ON_USB" ]
   }
   sources = [
-    "$camera_path/adapter/platform/v4l2/src/pipeline_core/nodes/uvc_node/uvc_node.cpp",
-    "$camera_path/adapter/platform/v4l2/src/pipeline_core/nodes/v4l2_source_node/v4l2_source_node.cpp",
     "$board_camera_path/pipeline_core/src/node/rk_codec_node.cpp",
     "$board_camera_path/pipeline_core/src/node/rk_exif_node.cpp",
     "$board_camera_path/pipeline_core/src/node/rk_face_node.cpp",
     "$board_camera_path/pipeline_core/src/node/rk_node_utils.cpp",
     "$board_camera_path/pipeline_core/src/node/rk_scale_node.cpp",
+    "$camera_path/adapter/platform/v4l2/src/pipeline_core/nodes/uvc_node/uvc_node.cpp",
+    "$camera_path/adapter/platform/v4l2/src/pipeline_core/nodes/v4l2_source_node/v4l2_source_node.cpp",
+
     #"$board_camera_path/pipeline_core/src/node/node_utils.cpp",
     "$camera_path/pipeline_core/src/pipeline_core.cpp",
+
     #"//device/soc/rockchip/rk3568/hardware/mpp/src/mpi_enc_utils.c",
     "//drivers/peripheral/camera/vdi_base/common/dump/src/camera_dump.cpp",
   ]
@@ -234,6 +239,7 @@ ohos_shared_library("rk_camera_pipeline_core") {
     "drivers_interface_camera:libbuffer_handle_sequenceable_1.0",
     "drivers_interface_camera:libbuffer_producer_sequenceable_1.0",
     "drivers_interface_camera:metadata",
+    "ffmpeg:libohosffmpeg",
     "graphic_surface:buffer_handle",
     "graphic_surface:surface",
     "hdf_core:libhdf_host",
@@ -241,7 +247,6 @@ ohos_shared_library("rk_camera_pipeline_core") {
     "hisysevent:libhisysevent",
     "ipc:ipc_single",
     "libexif:libexif",
-    "ffmpeg:libohosffmpeg",
   ]
 
   public_configs = [ ":pipe_config" ]
@@ -259,7 +264,6 @@ config("example_config") {
     "-Wno-unused-parameter",
   ]
 }
-
 
 ohos_shared_library("camera_ipp_algo_example") {
   sources = [ "src/ipp_algo_example/ipp_algo_example.c" ]
