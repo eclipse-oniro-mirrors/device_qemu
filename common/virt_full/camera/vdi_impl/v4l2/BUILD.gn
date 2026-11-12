@@ -32,55 +32,59 @@ if (product_name == "virt_mini_system") {
     hcs_outputs = get_target_outputs(":build_camera_host_config")
     source = hcs_outputs[0]
     relative_install_dir = "hdfconfig"
-    install_images = [ chipset_base_dir, chip_prod_base_dir ]
+    install_images = [
+      chipset_base_dir,
+      chip_prod_base_dir,
+    ]
     subsystem_name = virt_subsystem_name
     part_name = virt_part_name
   }
 
+  import("camera_config.gni")
+
   hc_gen_c("generate_source") {
-    sources = [
-      "$product_config_path/hdf_config/uhdf/camera/pipeline_core/config.hcs",
-      "$product_config_path/hdf_config/uhdf/camera/pipeline_core/params.hcs",
-    ]
+    sources = camera_config_hcs
+    outputs = camera_config_output_pattern
   }
 
+  camera_config_outputs = get_target_outputs(":generate_source")
+  camera_config_include_dirs =
+      [ get_path_info(camera_config_outputs[0], "dir") ]
+
+  # Keep deployment for existing header consumers, without touching equal files.
   action("copy_source") {
-    script = "/usr/bin/env"
-    outputs = [ "$target_out_dir/tmp.c" ]  # no use, just for gn complains
-    args = [
-      "cp",
-      "-f",
-    ]
-    args += rebase_path(get_target_outputs(":generate_source"))
-    args += [ rebase_path(
-            "$camera_path/pipeline_core/pipeline_impl/src/strategy/config/") ]
+    script = "copy_sources.py"
+    depfile = "$target_gen_dir/copy_source.d"
+    inputs = camera_config_outputs
+    outputs = [ "$target_out_dir/camera_config_deployed" ]
+    args =
+        [ "--sources" ] + rebase_path(camera_config_outputs, root_build_dir) + [
+          "--destination",
+          rebase_path(
+              "$camera_path/pipeline_core/pipeline_impl/src/strategy/config",
+              root_build_dir),
+          "--stamp",
+          rebase_path(outputs[0], root_build_dir),
+          "--depfile",
+          rebase_path(depfile, root_build_dir),
+        ]
     deps = [ ":generate_source" ]
   }
 
-  ohos_prebuilt_etc("config.c") {
-    deps = [ ":copy_source" ]
-    source =
-        "$camera_path/pipeline_core/pipeline_impl/src/strategy/config/config.c"
-    exec_script(
-        "/usr/bin/env",
-        [
-          "touch",
-          rebase_path(
-              "$camera_path/pipeline_core/pipeline_impl/src/strategy/config/config.c"),
-        ])
-  }
+  foreach(config_source, camera_config_sources) {
+    config_name = get_path_info(config_source, "file")
+    ohos_prebuilt_etc(config_name) {
+      deps = [
+        ":copy_source",
+        ":generate_source",
+      ]
+      source = config_source
 
-  ohos_prebuilt_etc("params.c") {
-    deps = [ ":copy_source" ]
-    source =
-        "$camera_path/pipeline_core/pipeline_impl/src/strategy/config/params.c"
-    exec_script(
-        "/usr/bin/env",
-        [
-          "touch",
-          rebase_path(
-              "$camera_path/pipeline_core/pipeline_impl/src/strategy/config/params.c"),
-        ])
+      # Preserve the existing prebuilt output and installed filename.
+      output = rebase_path(
+              "$camera_path/pipeline_core/pipeline_impl/src/strategy/config/$config_name",
+              "//")
+    }
   }
 
   hc_gen("build_ipp_algo_config") {
@@ -240,8 +244,8 @@ if (product_name == "virt_mini_system") {
       "drivers_interface_camera:metadata",
       "drivers_interface_display:libdisplay_composer_proxy_1.0",
       "graphic_surface:buffer_handle",
-      "hitrace:hitrace_meter",
       "hisysevent:libhisysevent",
+      "hitrace:hitrace_meter",
       "ipc:ipc_single",
       "libexif:libexif",
     ]
@@ -301,8 +305,8 @@ if (product_name == "virt_mini_system") {
       "drivers_interface_camera:metadata",
       "drivers_interface_display:libdisplay_composer_proxy_1.0",
       "graphic_surface:buffer_handle",
-      "hitrace:hitrace_meter",
       "hisysevent:libhisysevent",
+      "hitrace:hitrace_meter",
       "ipc:ipc_single",
       "libexif:libexif",
     ]
@@ -313,11 +317,13 @@ if (product_name == "virt_mini_system") {
   }
 
   ohos_shared_library("camera_pipeline_config") {
-    sources = [
-      "$camera_path/pipeline_core/pipeline_impl/src/strategy/config/config.c",
-      "$camera_path/pipeline_core/pipeline_impl/src/strategy/config/params.c",
+    sources = camera_config_sources
+    deps = [
+      ":copy_source",
+      ":generate_source",
     ]
     include_dirs =
+        camera_config_include_dirs +
         [ "$camera_path/pipeline_core/pipeline_impl/src/strategy/config" ]
     install_images = [ chipset_base_dir ]
     subsystem_name = virt_subsystem_name
@@ -331,9 +337,7 @@ if (product_name == "virt_mini_system") {
       "-Wall",
     ]
     cflags_cc = cflags
-    include_dirs = [
-      "$camera_path/../common/metadata_manager/include",
-    ]
+    include_dirs = [ "$camera_path/../common/metadata_manager/include" ]
     sources = [ "$camera_path/../common/metadata_manager/src/camera_example_vendor_tags.cpp" ]
     external_deps = [ "drivers_interface_camera:metadata" ]
     install_images = [ chipset_base_dir ]
@@ -345,8 +349,8 @@ if (product_name == "virt_mini_system") {
     deps = [
       ":camera_host_vdi_impl_1.0",
       ":camera_pipeline_config",
-      ":chipset_build",
       ":camera_vendor_tag_impl",
+      ":chipset_build",
     ]
   }
 
