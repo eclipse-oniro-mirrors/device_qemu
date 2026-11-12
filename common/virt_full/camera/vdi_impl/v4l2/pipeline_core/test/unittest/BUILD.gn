@@ -104,6 +104,7 @@ ohos_unittest("camera_pipeline_core_test_ut") {
   }
 
   external_deps += [
+    "bounds_checking_function:libsec_shared",
     "drivers_interface_camera:metadata",
     "ipc:ipc_single",
     "samgr:samgr_proxy",
