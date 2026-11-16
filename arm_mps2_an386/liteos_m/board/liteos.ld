@@ -58,6 +58,14 @@ SECTIONS
     *(.igot)
   } > flash
 
+  /* cppsupport fast-region function (before .text = lower address) */
+  .fast_text : ALIGN(0x4) {
+    KEEP(*(.nor.itcm.text))
+    KEEP(*(.nor.itcm.text.*))
+    . = ALIGN(0x4);
+    __fast_end = .;
+  } > ram
+
   .text : {
     . = ALIGN(0x4);
     __text_start = .;

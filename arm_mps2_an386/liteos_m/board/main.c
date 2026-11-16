@@ -29,6 +29,9 @@
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+#ifdef LOSCFG_KERNEL_CPPSUPPORT
+#include "los_cppsupport.h"
+#endif
 #include "los_config.h"
 #include "uart.h"
 #include "los_debug.h"
@@ -61,6 +64,15 @@ LITE_OS_SEC_TEXT_INIT int main(void)
         printf("LiteOS kernel init failed! ERROR: 0x%x\n", ret);
         goto EXIT;
     }
+
+#ifdef LOSCFG_KERNEL_CPPSUPPORT
+    {
+        extern char __init_array_start;
+        extern char __init_array_end;
+        ret = LOS_CppSystemInit((UINTPTR)&__init_array_start,
+                                (UINTPTR)&__init_array_end, NO_SCATTER);
+    }
+#endif
 #if (LOSCFG_SUPPORT_LITTLEFS == 1)
     LfsLowLevelInit();
 #endif
