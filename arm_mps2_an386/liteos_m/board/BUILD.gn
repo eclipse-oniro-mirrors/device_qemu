@@ -49,6 +49,10 @@ kernel_module(module_name) {
     sources += [ "test/test_demo.c" ]
   }
   include_dirs += [ "driver/net/" ]
+
+  # Exclude gcov instrumentation in coverage builds: board-level adaptation
+  # code is out of the kernel coverage scope.
+  configs += [ "//kernel/liteos_m/testsuites:no_test_coverage" ]
 }
 
 config("public") {
