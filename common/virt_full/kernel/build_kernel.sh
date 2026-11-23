@@ -92,6 +92,12 @@ function copy_kernel(){
     patch -d ${KERNEL_BUILD_ROOT} -p1 <${KERNEL_PATCH_PATH}/patch/md_stop_writes.patch
 # Fix code_sign_misc.c: add missing #include <linux/fs.h> for file_operations
 sed -i '1,/#include <linux\/miscdevice.h>/{s/#include <linux\/miscdevice.h>/#include <linux\/miscdevice.h>\n#include <linux\/fs.h>/}' ${KERNEL_BUILD_ROOT}/fs/code_sign/code_sign_misc.c
+
+# Emulator-specific: remove ext4_has_feature_verity check from CODE_SIGN ioctl.
+# The emulator's ext4 userdata is not formatted with -O verity, so the check
+# would block code signing. Production ext4 users should enable the verity
+# feature on their filesystem (mkfs.ext4 -O verity) to use code signing.
+sed -i '/case FS_IOC_ENABLE_CODE_SIGN:/{n;/ext4_has_feature_verity/{N;d}}' ${KERNEL_BUILD_ROOT}/fs/ext4/ioctl.c
 }
 
 function stage_ko(){
