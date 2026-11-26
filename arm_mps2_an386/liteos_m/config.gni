@@ -81,6 +81,7 @@ board_asmflags = [
 board_asmflags += board_opt_flags
 
 board_cxx_flags = board_cflags
+board_cxx_flags -= [ "-std=c99" ]
 
 board_ld_flags = []
 
